@@ -1,0 +1,1 @@
+Por favor, analiza los archivos lib/models/student.dart y lib/models/class_schedule.dart y infodelaAPP.txt que ya existen en mi proyecto para entender la estructura de datos antes de escribir código

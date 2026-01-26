@@ -1,0 +1,54 @@
+=== PROYECTO: APP DE GESTIÓN DOJO GAMIFICADA ===
+
+1. VISIÓN GENERAL
+-----------------
+Desarrollo de una aplicación móvil en Flutter para la gestión de una academia de artes marciales.
+Objetivo principal: Generar una "pseudoadicción sana" al deporte mediante gamificación (estrellas, medallas, rankings).
+Público objetivo: Desde niños de 5 años hasta adultos. La interfaz debe ser visual, táctil y atractiva (estilo videojuego).
+
+2. TECNOLOGÍA (STACK)
+---------------------
+- Framework: Flutter (Dart).
+- Base de Datos Local: Hive (NoSQL).
+- Manejo de Imágenes: image_picker + path_provider (Guardado local).
+- Estado: setState (actualmente) o Provider/Riverpod (futuro).
+
+3. ESTRUCTURA DE DATOS (CRÍTICO)
+--------------------------------
+El modelo de datos debe soportar "Asistencia Multiclase". Un mismo alumno puede asistir a Kickboxing y a Muay Thai, y sus estadísticas deben ser independientes.
+
+A. MODELO `Student` (Hive Type 1):
+   - id (String, UUID).
+   - Datos personales: nombre, foto (path local), datos padres, observaciones.
+   - stars (int): Méritos acumulados (gamificación).
+   - attendanceByClass (Map<String, List<String>>): 
+     * CLAVE: ID de la Clase (scheduleId).
+     * VALOR: Lista de fechas ISO8601.
+     * OBJETIVO: Permitir que el alumno tenga historiales de asistencia separados por disciplina.
+
+B. MODELO `ClassSchedule` (Hive Type 0):
+   - id (String).
+   - nombre (Ej: "Infantiles 17hs").
+   - diasDeSemana (List<int>): 1=Lunes, 7=Domingo.
+   - studentIds (List<String>): IDs de alumnos inscritos en esta clase.
+
+4. FUNCIONALIDADES CLAVE
+------------------------
+
+A. GESTIÓN DE CLASES (Horarios)
+   - Visualización de calendario para configurar días de clase y feriados.
+   - Lista de alumnos inscritos visible dentro de cada clase.
+   - Cálculo automático de "Total de clases en el mes" según los días configurados.
+
+B. GESTIÓN DE ALUMNOS (Hoja de Vida)
+   - CRUD completo (Crear, Leer, Editar, Archivar). datos de los alumnos: nombre completo, dni, peso, altura, edad, fecha de nacimiento, datos de los padres, contactos del padre la madre y el alumno, sistema de recompensas.
+   - Foto de perfil obligatoria (cámara/galería).
+   - Botón de "Archivar/Reactivar" (Soft Delete).
+   - Navegación: Se puede acceder al perfil desde el Padrón General( editar info aqui) o desde una Clase específica(solo lectura desde la clase).
+
+C. SISTEMA DE ASISTENCIA INTELIGENTE
+   - Lógica: Al marcar "Presente" dentro de una clase, la asistencia se guarda SOLAMENTE en la "casilla" de esa clase (usando `attendanceByClass`).
+   - Visualización: En el perfil del alumno, los contadores de asistencia cambian dinámicamente según desde qué clase se esté consultando la ficha.
+
+D. GAMIFICACIÓN (Sistema de Recompensas)
+   - Estrellas (+/-): Bot

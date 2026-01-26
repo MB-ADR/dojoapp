@@ -1,0 +1,26 @@
+INFORME DE FALLOS DE ANÁLISIS ESTÁTICO (FLUTTER ANALYZE)
+
+La aplicación presenta 40 problemas identificados durante el análisis estático. Los fallos se agrupan a continuación:
+
+ERRORES CRÍTICOS (Que impiden la compilación o causan fallos de ejecución conocidos):
+1. **Inconsistencia en el Modelo Student/Generación de Código (lib/models/student.g.dart)**:
+   - El parámetro 'attendanceHistory' no está definido donde se espera, afectando la inicialización (línea 30) y su acceso como getter (línea 61). Esto sugiere que el archivo generado necesita ser regenerado o que la definición de la clase `Student` original no coincide con lo que espera el generador de código.
+
+2. **Errores de Navegación/Constructor (Argumentos Faltantes/Indefinidos)**:
+   - **lib/screens/archived_students_screen.dart** (Línea 146-147): Faltan argumentos requeridos ('studentId' o similar) y se usa un parámetro no definido ('student').
+   - **lib/screens/class_detail_screen.dart** (Línea 247-250): Faltan argumentos requeridos/definidos ('studentId', 'student', 'schedule') al intentar instanciar componentes o navegar.
+   - **lib/screens/schedule_screen.dart** (Línea 173): Faltan argumentos requeridos/definidos ('scheduleId', 'schedule').
+
+3. **Inicialización de Variables Finales (lib/screens/new_student_form_screen.dart)**:
+   - **Línea 36**: La variable final `_photoPathPlaceholder` no está inicializada. Debe asignársele un valor al declararse.
+
+4. **Errores de Identificador/Sintaxis (lib/screens/read_only_student_detail_screen.dart)**:
+   - **Línea 190**: Se utiliza un nombre no definido: `asistenciasDeClaseMes`.
+   - **Línea 276**: Errores de sintaxis indicando falta de un identificador y un corchete ']'.
+
+ADVERTENCIAS Y MEJORAS DE ESTILO:
+- **Uso de Contexto Asíncrono (use_build_context_synchronously)**: Múltiples advertencias en `archived_students_screen.dart` y `classes_list_screen.dart` sobre usar `BuildContext` después de una espera (`await`).
+- **Uso de Código Obsoleto (Deprecated)**: Uso de `groupValue` y `onChanged` en radios en `classes_list_screen.dart` (Línea 395-396).
+- **Lógica Innecesaria**: Hay múltiples imports no utilizados, elementos no referenciados y llamadas a `print` que deberían eliminarse en código de producción.
+
+Este informe resume los problemas detectados por el analizador. Para resolverlos, se deberá corregir la definición del modelo `Student`, asegurar que todos los navegadores y constructores reciban los argumentos necesarios y completar la inicialización de variables finales.
