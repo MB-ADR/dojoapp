@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import '../models/class_schedule.dart';
-import '../services/database_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 const List<String> diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -23,30 +21,27 @@ class ScheduleManagementScreen extends StatefulWidget {
 class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
   late ClassSchedule _schedule;
   late List<DateTime> _localCancelledDatesDateTime;
-  late TextEditingController _nombreController;
   DateTime _selectedMonth = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    // Copiar explícitamente para evitar problemas de referencia
     _schedule = ClassSchedule(
       id: widget.schedule.id,
-      nombre: widget.schedule.nombre,
+      disciplina: widget.schedule.disciplina,
+      horario: widget.schedule.horario,
+      categoria: widget.schedule.categoria,
       diasDeSemana: List<int>.from(widget.schedule.diasDeSemana),
       fechasCanceladas: List<String>.from(widget.schedule.fechasCanceladas),
     );
     
-    // Inicializar la lista local de DateTime para el calendario y lógica, parseando los strings
     _localCancelledDatesDateTime = _schedule.fechasCanceladas
         .map((dateStr) => DateTime.parse(dateStr))
         .toList();
-    
-    _nombreController = TextEditingController(text: _schedule.nombre);
   }
 
   void _toggleDayOfWeek(int dayIndex) {
-    final dayValue = dayIndex + 1; // Mapear 0-6 (lista) a 1-7 (DateTime.weekday)
+    final dayValue = dayIndex + 1;
     setState(() {
       if (_schedule.diasDeSemana.contains(dayValue)) {
         _schedule.diasDeSemana.remove(dayValue);
@@ -60,36 +55,15 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
   void _toggleCancelledDate(DateTime date) {
     setState(() {
       if (_localCancelledDatesDateTime.any((d) => d.isAtSameMomentAs(date))) {
-        // Remover de ambas listas
         _localCancelledDatesDateTime.removeWhere((d) => d.isAtSameMomentAs(date));
-        _schedule.removeCancelledDate(date); // Actualiza List<String> interna en _schedule
+        _schedule.removeCancelledDate(date);
       } else {
-        // Añadir a ambas listas
         _localCancelledDatesDateTime.add(date);
-        _schedule.addCancelledDate(date); // Actualiza List<String> interna en _schedule
+        _schedule.addCancelledDate(date);
       }
-      // Mantener la lista de DateTime ordenada por seguridad UI
       _localCancelledDatesDateTime.sort((a, b) => a.compareTo(b));
     });
   }
-   
-    @override
-    void dispose() {
-      _nombreController.dispose();
-      super.dispose();
-    }
-     
-      @override
-      void dispose() {
-        _nombreController.dispose();
-        super.dispose();
-      }
-       
-        @override
-        void dispose() {
-          _nombreController.dispose();
-          super.dispose();
-        }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +74,6 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: () {
-              _schedule.nombre = _nombreController.text;
               widget.onSave(_schedule);
               Navigator.pop(context);
             },
@@ -112,18 +85,27 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // NOMBRE DE LA CLASE
-            TextField(
-              controller: TextEditingController(text: _schedule.nombre),
-              onChanged: (value) => _schedule.nombre = value,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la Clase',
-                prefixIcon: Icon(Icons.class_),
+            Card(
+              color: Colors.blue[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _schedule.nombre,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Disciplina: ${_schedule.disciplina}'),
+                    Text('Horario: ${_schedule.horario}'),
+                    Text('Categoría: ${_schedule.categoria}'),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
-            // DÍAS DE LA SEMANA
             const Text(
               'Días de Clase Programados',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -160,14 +142,12 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
             ),
             const SizedBox(height: 32),
 
-            // FECHAS CANCELADAS
             const Text(
               'Gestionar Feriados/Cancelaciones',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
-            // Selector de mes
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -191,7 +171,6 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Calendario
             Card(
               child: TableCalendar<DateTime>(
                 firstDay: DateTime(2020),
@@ -220,7 +199,6 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Lista de cancelaciones
             if (_localCancelledDatesDateTime.isNotEmpty)
               Card(
                 child: Padding(
@@ -242,14 +220,13 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
                             onPressed: () => _toggleCancelledDate(date),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),
               ),
             const SizedBox(height: 16),
 
-            // Resumen
             Card(
               color: Colors.blue[50],
               child: Padding(

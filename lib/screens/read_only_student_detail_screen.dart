@@ -85,11 +85,10 @@ class ReadOnlyStudentDetailScreen extends StatelessWidget {
                 
                 const Divider(height: 30),
 
-                _buildField('Padre', student.padreNombre ?? '-'),
-                _buildField('Tel Padre', student.padreTel ?? '-'),
-                _buildField('Madre', student.madreNombre ?? '-'),
-                _buildField('Tel Madre', student.madreTel ?? '-'),
-                
+                _buildField('Padre', '${student.nombrePadre ?? ''} ${student.apellidoPadre ?? ''}'),
+                _buildField('Tel Padre', student.telefonoPadre ?? '-'),
+                _buildField('Madre', '${student.nombreMadre ?? ''} ${student.apellidoMadre ?? ''}'),
+                _buildField('Tel Madre', student.telefonoMadre ?? '-'),                
                 const Divider(height: 30),
                 _buildField('Observaciones', student.observaciones ?? '-'),
  

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/class_schedule.dart';
 import '../models/student.dart';
 import '../services/database_service.dart';
-import 'classes_list_screen.dart'; 
 import 'read_only_student_detail_screen.dart'; // IMPORTAR NUEVA VISTA SOLO LECTURA
  
 class ClassDetailScreen extends StatefulWidget {

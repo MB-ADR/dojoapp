@@ -6,8 +6,6 @@ import 'package:dojo_app/screens/schedule_management_screen.dart';
 import 'package:dojo_app/screens/read_only_student_detail_screen.dart';
 import 'package:dojo_app/screens/class_creation_screen.dart';
 import 'package:dojo_app/screens/new_student_form_screen.dart'; 
-import 'package:dojo_app/screens/student_detail_screen.dart'; 
-import 'package:hive_flutter/hive_flutter.dart';
 
 class ClassesListScreen extends StatefulWidget {
   const ClassesListScreen({super.key});
@@ -69,13 +67,17 @@ class _ClassesListScreenState extends State<ClassesListScreen> {
     ).then((_) => _loadClasses()); // Recargar al volver
   }
   
-  void _navigateAndCreateClass(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-       builder: (context) => const ClassCreationScreen(),
-      ),
-    );
+void _navigateAndCreateClass(BuildContext context) async {
+  final result = await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (context) => const ClassCreationScreen(),
+    ),
+  );
+  
+  if (result == true) {
+    _loadClasses(); // Recargar lista si se creó una clase
   }
+}
   
   @override
   Widget build(BuildContext context) {

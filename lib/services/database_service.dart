@@ -4,6 +4,7 @@ import '../models/student.dart';
 import '../models/class_schedule.dart';
 import '../models/payment_record.dart';
 import '../models/notification_event.dart';
+import '../models/lesion.dart';
 
 class DatabaseService {
   static const String studentBoxName = 'students';
@@ -26,79 +27,22 @@ class DatabaseService {
     _scheduleBox = await Hive.openBox<ClassSchedule>(scheduleBoxName);
     _paymentBox = await Hive.openBox<PaymentRecord>(paymentBoxName);
     _notificationBox = await Hive.openBox<NotificationEvent>(notificationBoxName);
-
-    // Si no hay horarios, crear algunos por defecto
-    if (_scheduleBox.isEmpty) {
-      await _seedInitialSchedules();
-    }
   }
 
-  Future<void> _seedInitialSchedules() async {
-    final initialSchedules = [
-      ClassSchedule(id: 'infantil_17', nombre: '17:00 hs - Infantiles', diasDeSemana: [1, 3, 5]),
-      ClassSchedule(id: 'juvenil_19', nombre: '19:00 hs - Juveniles', diasDeSemana: [2, 4, 6]),
-      ClassSchedule(id: 'adulto_21', nombre: '21:00 hs - Adultos', diasDeSemana: [1, 4]),
-      ClassSchedule(id: 'competidor_22', nombre: '22:00 hs - Competidores', diasDeSemana: [2, 5]),
-    ];
+  // --- GESTIÓN DE ALUMNOS ---
 
-    for (var schedule in initialSchedules) {
-      await saveSchedule(schedule);
-    }
-  }
-
-  // --- Gestión de Horarios ---
-  Future<void> saveSchedule(ClassSchedule schedule) async {
-    if (schedule.id.isEmpty) {
-      schedule.id = _uuid.v4();
-    }
-    await _scheduleBox.put(schedule.id, schedule);
-  }
-
-  Future<void> deleteSchedule(String id) async {
-    await _scheduleBox.delete(id);
-  }
-
-  List<ClassSchedule> getAllSchedules() {
-    return _scheduleBox.values.toList();
-  }
-
-  ClassSchedule? getSchedule(String id) {
-    return _scheduleBox.get(id);
-  }
-  
-  // Lógica adicional para limpiar referencias al borrar una clase (Requerido por TODO 3)
-  Future<void> cleanupScheduleReferences(String scheduleId) async {
-    final allStudents = await getAllStudents();
-    for (var student in allStudents) {
-      bool changed = false;
-      
-      if (student.classIds.contains(scheduleId)) {
-        student.classIds.remove(scheduleId);
-        changed = true;
-      }
-      
-      if (student.attendanceByClass.containsKey(scheduleId)) {
-        student.attendanceByClass.remove(scheduleId);
-        changed = true;
-      }
-      
-      if (changed) {
-        await saveStudent(student);
-      }
-    }
-  }
-
-
-  // --- Gestión de Alumnos ---
   Future<void> saveStudent(Student student) async {
     if (student.id.isEmpty) {
-      student.id = _uuid.v4();
+      // Generar ID único formato: YYYYMMDD-DNI
+      final now = DateTime.now();
+      final datePrefix = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      student.id = '$datePrefix-${student.dni}';
+      student.creationDate = now;
     }
     await _studentBox.put(student.id, student);
   }
 
   Future<void> deleteStudent(String id) async {
-    // Soft delete: solo lo marcamos como archivado
     final student = getStudent(id);
     if (student != null) {
       student.isArchived = true;
@@ -110,23 +54,83 @@ class DatabaseService {
     return _studentBox.get(id);
   }
 
-  Future<List<Student>> getStudentsForScheduleId(String scheduleId) async {
-    final allStudents = await getAllStudents();
-    return allStudents
-        .where((s) => s.classIds.contains(scheduleId) && !s.isArchived)
-        .toList();
+  Future<List<Student>> getAllStudents() async {
+    return _studentBox.values.where((s) => !s.isArchived).toList();
   }
 
-  Future<List<Student>> getAllStudents() async {
-    return _studentBox.values.toList();
+  Future<List<Student>> getStudentsByCategoria(String categoria) async {
+    final allStudents = await getAllStudents();
+    return allStudents.where((s) => s.categoriaBusqueda == categoria).toList();
   }
 
   Future<List<Student>> getAllArchivedStudents() async {
-    final allStudents = await getAllStudents();
-    return allStudents.where((s) => s.isArchived).toList();
+    return _studentBox.values.where((s) => s.isArchived).toList();
   }
 
-  // --- Relaciones ---
+  Future<List<Student>> getStudentsForScheduleId(String scheduleId) async {
+    final allStudents = await getAllStudents();
+    return allStudents
+        .where((s) => s.classIds.contains(scheduleId))
+        .toList();
+  }
+
+  // Buscar alumnos con cumpleaños mañana
+  List<Student> getStudentsWithBirthdayTomorrow() {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final allStudents = _studentBox.values.where((s) => !s.isArchived).toList();
+    
+    return allStudents.where((student) {
+      if (student.fechaNacimiento == null) return false;
+      return student.fechaNacimiento!.month == tomorrow.month &&
+          student.fechaNacimiento!.day == tomorrow.day;
+    }).toList();
+  }
+
+  // --- GESTIÓN DE CLASES ---
+
+  Future<void> saveSchedule(ClassSchedule schedule) async {
+    if (schedule.id.isEmpty) {
+      schedule.id = _uuid.v4();
+    }
+    await _scheduleBox.put(schedule.id, schedule);
+  }
+
+  Future<void> deleteSchedule(String id) async {
+    await _scheduleBox.delete(id);
+    await cleanupScheduleReferences(id);
+  }
+
+  List<ClassSchedule> getAllSchedules() {
+    return _scheduleBox.values.toList();
+  }
+
+  ClassSchedule? getSchedule(String id) {
+    return _scheduleBox.get(id);
+  }
+
+  Future<void> cleanupScheduleReferences(String scheduleId) async {
+    final allStudents = await getAllStudents();
+    for (var student in allStudents) {
+      bool changed = false;
+
+      if (student.classIds.contains(scheduleId)) {
+        student.classIds.remove(scheduleId);
+        changed = true;
+      }
+
+      if (student.attendanceByClass.containsKey(scheduleId)) {
+        student.attendanceByClass.remove(scheduleId);
+        changed = true;
+      }
+
+      if (changed) {
+        await saveStudent(student);
+      }
+    }
+  }
+
+  // --- RELACIONES ALUMNO-CLASE ---
+
   Future<void> assignStudentToSchedule(String studentId, String scheduleId) async {
     final student = getStudent(studentId);
     final schedule = getSchedule(scheduleId);
@@ -158,25 +162,117 @@ class DatabaseService {
       await saveSchedule(schedule);
     }
   }
-  
-  // --- Gestión de Pagos (Implementación base) ---
+
+  // --- SISTEMA DE PREMIOS ---
+
+  // Calcular ganadores del mes (ejecutar el día 1 del mes siguiente)
+  Future<Map<String, dynamic>> calcularGanadoresDelMes(int year, int month) async {
+    final allStudents = await getAllStudents();
+    
+    // Calcular estrellas totales del mes para cada alumno
+    final studentScores = <String, int>{};
+    
+    for (var student in allStudents) {
+      int totalAsistencias = 0;
+      int totalClasesDelMes = 0;
+      
+      for (var classId in student.classIds) {
+        final schedule = getSchedule(classId);
+        if (schedule != null) {
+          totalAsistencias += student.getAsistenciasPorClase(classId, month, year);
+          totalClasesDelMes += schedule.calculateTotalClasses(month, year, student.creationDate);
+        }
+      }
+      
+      // Estrella automática si asistió a todas las clases
+      int estrellasDelMes = student.stars;
+      if (totalClasesDelMes > 0 && totalAsistencias >= totalClasesDelMes) {
+        estrellasDelMes += 1;
+      }
+      
+      if (estrellasDelMes > 0) {
+        studentScores[student.id] = estrellasDelMes;
+      }
+    }
+    
+    // Ordenar por estrellas
+    final sortedStudents = studentScores.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    return {
+      'oro': sortedStudents.isNotEmpty ? sortedStudents[0].key : null,
+      'plata': sortedStudents.length > 1 ? sortedStudents[1].key : null,
+      'bronce': sortedStudents.length > 2 ? sortedStudents[2].key : null,
+      'participantes': sortedStudents.length > 3 
+          ? sortedStudents.skip(3).map((e) => e.key).toList() 
+          : <String>[],
+      'empate': sortedStudents.length > 1 && sortedStudents[0].value == sortedStudents[1].value,
+      'scores': studentScores,
+    };
+  }
+
+  Future<void> otorgarMedallas(Map<String, dynamic> ganadores) async {
+    // Oro
+    if (ganadores['oro'] != null) {
+      final student = getStudent(ganadores['oro']);
+      if (student != null) {
+        student.agregarMedalla('oro');
+      }
+    }
+    
+    // Plata
+    if (ganadores['plata'] != null) {
+      final student = getStudent(ganadores['plata']);
+      if (student != null) {
+        student.agregarMedalla('plata');
+      }
+    }
+    
+    // Bronce
+    if (ganadores['bronce'] != null) {
+      final student = getStudent(ganadores['bronce']);
+      if (student != null) {
+        student.agregarMedalla('bronce');
+      }
+    }
+    
+    // Corazones para participantes
+    final participantes = ganadores['participantes'] as List<String>?;
+    if (participantes != null) {
+      for (var studentId in participantes) {
+        final student = getStudent(studentId);
+        if (student != null) {
+          student.agregarMedalla('corazon');
+        }
+      }
+    }
+  }
+
+  // Rankings históricos
+  List<Student> getRankingByMedal(String medalType) {
+    final allStudents = _studentBox.values.where((s) => !s.isArchived).toList();
+    allStudents.sort((a, b) => 
+      (b.medallas[medalType] ?? 0).compareTo(a.medallas[medalType] ?? 0)
+    );
+    return allStudents.where((s) => (s.medallas[medalType] ?? 0) > 0).toList();
+  }
+
+  // --- GESTIÓN DE PAGOS ---
+
   Future<void> recordPayment(String studentId, PaymentRecord payment) async {
-      final student = getStudent(studentId);
-      if (student == null) return;
-      
-      student.addPayment(payment); 
+    final student = getStudent(studentId);
+    if (student == null) return;
+    student.addPayment(payment);
   }
-  
-  // --- Gestión de Notificaciones (Implementación base) ---
+
+  // --- GESTIÓN DE NOTIFICACIONES ---
+
   Future<void> recordNotification(String studentId, NotificationEvent event) async {
-      final student = getStudent(studentId);
-      if (student == null) return;
-      
-      student.addNotification(event); 
+    final student = getStudent(studentId);
+    if (student == null) return;
+    student.addNotification(event);
   }
-  
-  // Métodos para acceder a pagos/notificaciones globales si se decide no guardarlos solo en el estudiante
+
   List<PaymentRecord> getAllPaymentRecords() => _paymentBox.values.toList();
   List<NotificationEvent> getAllNotificationEvents() => _notificationBox.values.toList();
-  
 }

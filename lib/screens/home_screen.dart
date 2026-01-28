@@ -1,116 +1,151 @@
 import 'package:flutter/material.dart';
-import 'package:dojo_app/models/class_schedule.dart'; // Importar el modelo necesario
-import 'classes_list_screen.dart'; // NUEVA IMPORTACIÓN
+import 'students_master_screen.dart';
+import 'classes_list_screen.dart';
+import 'awards_screen.dart';
+import 'competitors_screen.dart';
+import '../services/database_service.dart';
 
-// Clase para representar una pantalla de placeholder simple
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Contenido para $title (Placeholder)',
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class HomeScreen extends StatelessWidget {
-  // CONSTRUCTOR NO CONSTANTE para permitir inicialización de campos no constantes
-  HomeScreen({super.key}); 
+class _HomeScreenState extends State<HomeScreen> {
+  final DatabaseService _dbService = DatabaseService();
+  String _birthdayMessage = '';
 
-  // Función dummy para el callback onSave, ya que no queremos persistir nada todavía.
-  void _dummyOnSave(ClassSchedule schedule) {
-    // En un entorno real, esto guardaría los datos.
-    debugPrint('Schedule data received (mock save): ${schedule.nombre}');
+  @override
+  void initState() {
+    super.initState();
+    _checkBirthdays();
   }
 
-  // Instancia dummy de ClassSchedule para satisfacer el constructor.
-  final ClassSchedule _dummySchedule = ClassSchedule(
-    nombre: "Horarios Generales",
-    diasDeSemana: [1, 2, 3, 4, 5], // Lunes a Viernes como default
-    fechasCanceladas: [],
-    studentIds: [],
-  );
+  void _checkBirthdays() {
+    final studentsWithBirthday = _dbService.getStudentsWithBirthdayTomorrow();
+    if (studentsWithBirthday.isNotEmpty) {
+      final names = studentsWithBirthday.map((s) => s.nombreCompleto).join(', ');
+      setState(() {
+        _birthdayMessage = '🎂 Cumpleaños mañana: $names';
+      });
+    }
+  }
 
-  
-  void _navigateToClassesList(BuildContext context) {
-    // Navega a la nueva lista de clases.
+  void _navigateToStudents() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const ClassesListScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const StudentsMasterScreen()),
     );
   }
 
-  void _showPlaceholder(BuildContext context, String title) {
-    // Navega a una pantalla de placeholder
+  void _navigateToClasses() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => PlaceholderScreen(title: title)),
+      MaterialPageRoute(builder: (_) => const ClassesListScreen()),
+    );
+  }
+
+  void _navigateToAwards() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AwardsScreen()),
+    );
+  }
+
+  void _navigateToCompetitors() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CompetitorsScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Usamos GridView.count para un layout de tarjetas grande y bonito.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard Dojo'),
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16.0,
-          mainAxisSpacing: 16.0,
-          children: <Widget>[
-            _DashboardButton(
-              icon: Icons.people,
-              title: '🎓 Gestionar Alumnos',
-              onTap: () => _showPlaceholder(context, 'Gestionar Alumnos'), // Usa lambda para pasar context
+      body: Column(
+        children: [
+          // Mensaje de cumpleaños
+          if (_birthdayMessage.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.shade300, width: 2),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.cake, color: Colors.orange, size: 32),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _birthdayMessage,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            _DashboardButton(
-              icon: Icons.calendar_month,
-              title: '📅 Horarios y Clases',
-              onTap: () => _navigateToClassesList(context), // CAMBIADO: Ahora apunta a ClassesListScreen
+
+          // Grid de 4 cards principales
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16.0,
+                mainAxisSpacing: 16.0,
+                children: [
+                  _DashboardCard(
+                    icon: Icons.people,
+                    title: '🎓 Gestionar\nAlumnos',
+                    color: Colors.blue,
+                    onTap: _navigateToStudents,
+                  ),
+                  _DashboardCard(
+                    icon: Icons.calendar_month,
+                    title: '📅 Horarios\ny Clases',
+                    color: Colors.green,
+                    onTap: _navigateToClasses,
+                  ),
+                  _DashboardCard(
+                    icon: Icons.emoji_events,
+                    title: '🏆 Premios\ny Ranking',
+                    color: Colors.orange,
+                    onTap: _navigateToAwards,
+                  ),
+                  _DashboardCard(
+                    icon: Icons.sports_martial_arts,
+                    title: '🥊 Competidores',
+                    color: Colors.red,
+                    onTap: _navigateToCompetitors,
+                  ),
+                ],
+              ),
             ),
-            _DashboardButton(
-              icon: Icons.emoji_events, // Ícono corregido
-              title: '🏆 Ranking / Podio',
-              onTap: () => _showPlaceholder(context, 'Ranking / Podio'), // Usa lambda para pasar context
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// Helper Widget para mantener la UI limpia y usar const
-class _DashboardButton extends StatelessWidget {
+class _DashboardCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final VoidCallback onTap; // Espera un VoidCallback (sin argumentos)
+  final Color color;
+  final VoidCallback onTap;
 
-  const _DashboardButton({
+  const _DashboardCard({
     required this.icon,
     required this.title,
+    required this.color,
     required this.onTap,
   });
 
@@ -118,21 +153,38 @@ class _DashboardButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       child: InkWell(
-        onTap: onTap, 
-        borderRadius: BorderRadius.circular(12.0),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.0),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.7),
+                color,
+              ],
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(icon, size: 48.0, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 8.0),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            children: [
+              Icon(icon, size: 56.0, color: Colors.white),
+              const SizedBox(height: 12.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),

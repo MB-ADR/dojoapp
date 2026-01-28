@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:dojo_app/models/student.dart';
 import 'package:dojo_app/models/class_schedule.dart';
 import 'package:dojo_app/services/database_service.dart';
@@ -81,22 +79,23 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
     }
 
     final newStudent = Student(
-      nombre: _nombreController.text,
-      // CORRECCIÓN 1: dni no puede ser null. Pasamos string vacío si está vacío.
-      dni: _dniController.text.trim(), 
-      // CORRECCIÓN 2: parámetro nombrado es ahora 'fechaNacimiento'
-      fechaNacimiento: _birthDate,
-      padreNombre: _padreNombreController.text.trim(),
-      padreTel: _padreTelController.text.trim(),
-      madreNombre: _madreNombreController.text.isEmpty ? null : _madreNombreController.text.trim(),
-      madreTel: _madreTelController.text.isEmpty ? null : _madreTelController.text.trim(),
-      photoPath: _photoPath,
-      classIds: _selectedClassIds.toList(),
-      creationDate: DateTime.now(),
-      isArchived: false,
-      stars: 0,
-      attendanceByClass: {},
-    );
+  nombre: _nombreController.text,
+  apellido: '', // Lo agregarás en el formulario
+  dni: _dniController.text.trim(),
+  fechaNacimiento: _birthDate,
+  nombrePadre: _padreNombreController.text.trim(),
+  apellidoPadre: '', // Agregar campo
+  telefonoPadre: _padreTelController.text.trim(),
+  nombreMadre: _madreNombreController.text.isEmpty ? null : _madreNombreController.text.trim(),
+  apellidoMadre: '', // Agregar campo
+  telefonoMadre: _madreTelController.text.isEmpty ? null : _madreTelController.text.trim(),
+  photoPath: _photoPath,
+  classIds: _selectedClassIds.toList(),
+  creationDate: DateTime.now(),
+  isArchived: false,
+  stars: 0,
+  attendanceByClass: {},
+);
 
     try {
       await DatabaseService().saveStudent(newStudent);

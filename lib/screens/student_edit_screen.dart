@@ -224,7 +224,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
             },
             labelStyle: TextStyle(color: _selectedFilter == null ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onPrimaryContainer),
             selectedColor: Theme.of(context).colorScheme.primary,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           
           // Filtros por Categoría
@@ -240,8 +240,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
             },
             labelStyle: TextStyle(color: _selectedFilter == category ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface),
             selectedColor: Theme.of(context).colorScheme.primary,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-          )).toList(),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          )),
         ],
       ),
     );

@@ -5,46 +5,57 @@ part 'class_schedule.g.dart';
 @HiveType(typeId: 0)
 class ClassSchedule extends HiveObject {
   @HiveField(0)
-  String id; // <--- Agregado para que DatabaseService funcione
+  String id;
 
   @HiveField(1)
-  String nombre;
+  String disciplina; // "Kick Boxing", "Muay Thai"
 
   @HiveField(2)
-  List<int> diasDeSemana;
+  String horario; // "17:15"
 
   @HiveField(3)
-  List<String> fechasCanceladas;
+  String categoria; // "Inicial", "Juvenil", "Adulto"
 
   @HiveField(4)
-  List<String> studentIds; // Relación con alumnos
+  List<int> diasDeSemana; // [1,3,5] = Lun, Mie, Vie
+
+  @HiveField(5)
+  List<String> fechasCanceladas;
+
+  @HiveField(6)
+  List<String> studentIds;
 
   ClassSchedule({
-    this.id = '', // Por defecto vacío, se genera al guardar
-    required this.nombre,
+    this.id = '',
+    required this.disciplina,
+    required this.horario,
+    required this.categoria,
     this.diasDeSemana = const [],
     List<String>? fechasCanceladas,
     List<String>? studentIds,
   })  : fechasCanceladas = fechasCanceladas ?? [],
         studentIds = studentIds ?? [];
 
-  // Helpers
+  // Nombre completo para mostrar
+  String get nombre => '$disciplina - $horario - $categoria';
+
   bool esHoyDiaDeClase() {
     final now = DateTime.now();
-    // En Dart: Lunes=1 ... Domingo=7.
-    // Verificamos si el dia actual está en la lista permitida
     return diasDeSemana.contains(now.weekday);
   }
 
-  // Método auxiliar para contar clases en un mes (simplificado)
   int calculateTotalClasses(int month, int year, DateTime? studentCreationDate) {
     int count = 0;
-    final effectiveCreationDate = studentCreationDate ?? DateTime(1900, 1, 1); // Asume una fecha muy antigua si es nula
-    // Lógica básica: iterar todos los días del mes y ver si coincide con diasDeSemana
+    final effectiveCreationDate = studentCreationDate ?? DateTime(1900, 1, 1);
     final daysInMonth = DateTime(year, month + 1, 0).day;
+    
     for (int i = 1; i <= daysInMonth; i++) {
       final date = DateTime(year, month, i);
       if (date.isBefore(effectiveCreationDate)) continue;
+      
+      final dateStr = date.toIso8601String().split('T').first;
+      if (fechasCanceladas.contains(dateStr)) continue;
+      
       if (diasDeSemana.contains(date.weekday)) {
         count++;
       }
@@ -53,7 +64,6 @@ class ClassSchedule extends HiveObject {
   }
 
   void addCancelledDate(DateTime date) {
-    // Guardar solo la parte de la fecha YYYY-MM-DD
     final dateStr = date.toIso8601String().split('T').first;
     if (!fechasCanceladas.contains(dateStr)) {
       fechasCanceladas.add(dateStr);

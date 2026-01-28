@@ -18,26 +18,32 @@ class ClassScheduleAdapter extends TypeAdapter<ClassSchedule> {
     };
     return ClassSchedule(
       id: fields[0] as String,
-      nombre: fields[1] as String,
-      diasDeSemana: (fields[2] as List).cast<int>(),
-      fechasCanceladas: (fields[3] as List?)?.cast<String>(),
-      studentIds: (fields[4] as List?)?.cast<String>(),
+      disciplina: fields[1] as String,
+      horario: fields[2] as String,
+      categoria: fields[3] as String,
+      diasDeSemana: (fields[4] as List).cast<int>(),
+      fechasCanceladas: (fields[5] as List?)?.cast<String>(),
+      studentIds: (fields[6] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ClassSchedule obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.nombre)
+      ..write(obj.disciplina)
       ..writeByte(2)
-      ..write(obj.diasDeSemana)
+      ..write(obj.horario)
       ..writeByte(3)
-      ..write(obj.fechasCanceladas)
+      ..write(obj.categoria)
       ..writeByte(4)
+      ..write(obj.diasDeSemana)
+      ..writeByte(5)
+      ..write(obj.fechasCanceladas)
+      ..writeByte(6)
       ..write(obj.studentIds);
   }
 
