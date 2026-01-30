@@ -4,7 +4,6 @@ import '../models/student.dart';
 import '../models/class_schedule.dart';
 import '../models/payment_record.dart';
 import '../models/notification_event.dart';
-import '../models/lesion.dart';
 
 class DatabaseService {
   static const String studentBoxName = 'students';

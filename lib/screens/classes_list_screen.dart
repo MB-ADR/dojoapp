@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:dojo_app/models/class_schedule.dart';
-import 'package:dojo_app/models/student.dart';
-import 'package:dojo_app/services/database_service.dart';
-import 'package:dojo_app/screens/schedule_management_screen.dart';
-import 'package:dojo_app/screens/read_only_student_detail_screen.dart';
-import 'package:dojo_app/screens/class_creation_screen.dart';
-import 'package:dojo_app/screens/new_student_form_screen.dart'; 
+import '../models/class_schedule.dart';
+import '../models/student.dart';
+import '../services/database_service.dart';
+import 'schedule_management_screen.dart';
+import 'read_only_student_detail_screen.dart';
+import 'class_creation_screen.dart';
+import 'new_student_form_screen.dart';
 
 class ClassesListScreen extends StatefulWidget {
   const ClassesListScreen({super.key});
@@ -18,13 +18,13 @@ class _ClassesListScreenState extends State<ClassesListScreen> {
   final DatabaseService _dbService = DatabaseService();
   List<ClassSchedule> _classes = [];
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadClasses();
   }
-  
+
   Future<void> _loadClasses() async {
     if (!mounted) return;
     setState(() {
@@ -44,7 +44,7 @@ class _ClassesListScreenState extends State<ClassesListScreen> {
       _showErrorSnackbar('Error al cargar clases: $e');
     }
   }
-  
+
   void _showErrorSnackbar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -54,31 +54,31 @@ class _ClassesListScreenState extends State<ClassesListScreen> {
       ),
     );
   }
-  
+
   void _onClassCreatedOrUpdated() {
     _loadClasses();
   }
-  
+
   void _navigateToClassDetail(BuildContext context, ClassSchedule classSchedule) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ClassDetailScreen(classSchedule: classSchedule),
       ),
-    ).then((_) => _loadClasses()); // Recargar al volver
+    ).then((_) => _loadClasses());
   }
-  
-void _navigateAndCreateClass(BuildContext context) async {
-  final result = await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => const ClassCreationScreen(),
-    ),
-  );
-  
-  if (result == true) {
-    _loadClasses(); // Recargar lista si se creó una clase
+
+  void _navigateAndCreateClass(BuildContext context) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ClassCreationScreen(),
+      ),
+    );
+
+    if (result == true) {
+      _loadClasses();
+    }
   }
-}
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,7 +116,6 @@ void _navigateAndCreateClass(BuildContext context) async {
   }
 }
 
-// Widget para la tarjeta de la clase
 class _ClassCard extends StatelessWidget {
   final ClassSchedule classSchedule;
   final VoidCallback onTap;
@@ -146,7 +145,6 @@ class _ClassCard extends StatelessWidget {
   }
 }
 
-// --- CLASE DE DETALLE DE CLASE (ClassDetailScreen) ---
 class ClassDetailScreen extends StatefulWidget {
   final ClassSchedule classSchedule;
   const ClassDetailScreen({super.key, required this.classSchedule});
@@ -173,9 +171,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     });
     try {
       final students = await _dbService.getStudentsForScheduleId(widget.classSchedule.id);
-      
       students.sort((a, b) => a.nombre.compareTo(b.nombre));
-      
+
       setState(() {
         _enrolledStudents = students;
         _isLoading = false;
@@ -198,18 +195,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
 
-  // Acción A: Vincular Alumno Existente
   Future<void> _linkExistingStudent() async {
     final allStudents = await _dbService.getAllStudents();
     final unassignedStudents = allStudents
         .where((s) => !s.classIds.contains(widget.classSchedule.id) && !s.isArchived)
         .toList();
-    
+
     if (unassignedStudents.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay alumnos activos disponibles para vincular.')),
-        );
-        return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay alumnos activos disponibles para vincular.')),
+      );
+      return;
     }
 
     final Student? selectedStudent = await showDialog<Student>(
@@ -219,35 +215,35 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
     if (selectedStudent != null) {
       await _dbService.assignStudentToSchedule(selectedStudent.id, widget.classSchedule.id);
-      _loadEnrolledStudents(); // Refrescar lista
+      _loadEnrolledStudents();
     }
   }
 
-  // Acción B: Crear Nuevo Alumno y Asignarlo
   Future<void> _createNewStudentAndAssign() async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const NewStudentFormScreen(), 
+        builder: (context) => NewStudentFormScreen(),
       ),
     );
 
-    if (result is String && result.isNotEmpty) { // Esperamos el ID del nuevo estudiante
-        await _dbService.assignStudentToSchedule(result, widget.classSchedule.id);
-        _loadEnrolledStudents(); // Refrescar lista
+    if (result is String && result.isNotEmpty) {
+      await _dbService.assignStudentToSchedule(result, widget.classSchedule.id);
+      _loadEnrolledStudents();
     }
   }
 
-  // Acción al tocar un alumno (Debe abrir ReadOnlyStudentDetailScreen)
   void _viewStudentDetails(Student student) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ReadOnlyStudentDetailScreen(studentId: student.id),
+        builder: (context) => ReadOnlyStudentDetailScreen(
+          studentId: student.id,
+          scheduleId: widget.classSchedule.id,
+        ),
       ),
-    );
+    ).then((_) => _loadEnrolledStudents()); // Recargar al volver
   }
 
   void _deleteStudentFromClass(Student student) {
-    // Desvincular
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -268,107 +264,250 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
 
+  void _updateStars(Student student, int delta) {
+    setState(() {
+      student.stars = (student.stars + delta).clamp(0, 999);
+      student.save();
+    });
+  }
+
+@override
+Widget build(BuildContext context) {
+  final puedeTomarAsistencia = widget.classSchedule.puedeTomarAsistenciaAhora();
+  final now = DateTime.now();
+
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(widget.classSchedule.nombre),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.calendar_month),
+          tooltip: 'Configurar Horarios/Días',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ScheduleManagementScreen(
+                  schedule: widget.classSchedule,
+                  onSave: (updatedSchedule) {
+                    _dbService.saveSchedule(updatedSchedule).then((_) {
+                      if (!mounted) return;
+                      _loadEnrolledStudents();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Horarios actualizados.')),
+                      );
+                    });
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              // Botones de acción superiores
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Column(
+                  children: [
+                    // Botón de asistencia
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: puedeTomarAsistencia
+                            ? () => _showAttendanceDialog()
+                            : null,
+                        icon: Icon(puedeTomarAsistencia ? Icons.how_to_reg : Icons.block),
+                        label: Text(
+                          puedeTomarAsistencia
+                              ? 'TOMAR ASISTENCIA'
+                              : 'Asistencia no disponible',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: puedeTomarAsistencia ? Colors.green : Colors.grey,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Botones de vincular alumnos
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: _linkExistingStudent,
+                              icon: const Icon(Icons.link),
+                              label: const Text('Vincular Alumno'),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: _createNewStudentAndAssign,
+                              icon: const Icon(Icons.person_add),
+                              label: const Text('Crear Alumno'),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+
+              // Lista de alumnos
+              Expanded(
+                child: _enrolledStudents.isEmpty
+                    ? const Center(
+                        child: Text('Aún no hay alumnos inscritos en esta clase.'),
+                      )
+                    : ListView.builder(
+                        itemCount: _enrolledStudents.length,
+                        itemBuilder: (context, index) {
+                          final student = _enrolledStudents[index];
+                          
+                          // Calcular asistencias del mes actual
+                          final asistencias = student.getAsistenciasPorClase(
+                            widget.classSchedule.id,
+                            now.month,
+                            now.year,
+                          );
+                          final totalClases = widget.classSchedule.calculateTotalClasses(
+                            now.month,
+                            now.year,
+                            student.creationDate,
+                          );
+                          final inasistencias = totalClases - asistencias;
+
+                          return _EnrolledStudentTileWithAttendance(
+                            student: student,
+                            asistencias: asistencias,
+                            totalClases: totalClases,
+                            inasistencias: inasistencias,
+                            onTap: () => _viewStudentDetails(student),
+                            onRemove: () => _deleteStudentFromClass(student),
+                            onUpdateStars: (delta) => _updateStars(student, delta),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+  );
+}
+
+// Nuevo widget con control de estrellas
+class _EnrolledStudentTileWithStars extends StatelessWidget {
+  final Student student;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+  final Function(int delta) onUpdateStars;
+
+  const _EnrolledStudentTileWithStars({
+    required this.student,
+    required this.onTap,
+    required this.onRemove,
+    required this.onUpdateStars,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.classSchedule.nombre),
-        actions: [
-          // Botón para configurar horarios (Conecta con ScheduleManagementScreen)
-          IconButton(
-            icon: const Icon(Icons.calendar_month),
-            tooltip: 'Configurar Horarios/Días',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ScheduleManagementScreen(
-                    schedule: widget.classSchedule,
-                    onSave: (updatedSchedule) {
-                      _dbService.saveSchedule(updatedSchedule).then((_) {
-                        if (!mounted) return;
-                        _loadEnrolledStudents(); 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Horarios actualizados.')),
-                        );
-                      });
-                    },
-                  ),
-                ),
-              );
-            },
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      elevation: 1.0,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          child: Text(
+            student.nombre.isNotEmpty ? student.nombre.substring(0, 1) : '?',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
           ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Sección de Acciones rápidas
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Acción A: Vincular Alumno Existente
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 4.0),
-                          child: ElevatedButton.icon(
-                            onPressed: _linkExistingStudent,
-                            icon: const Icon(Icons.link),
-                            label: const Text('Vincular Alumno Existente'),
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(0, 40),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Acción B: Crear Nuevo Alumno
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4.0),
-                          child: ElevatedButton.icon(
-                            onPressed: _createNewStudentAndAssign,
-                            icon: const Icon(Icons.person_add),
-                            label: const Text('Crear Nuevo Alumno'),
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(0, 40),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+        ),
+        title: Text(
+          student.nombreCompleto,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: Row(
+          children: [
+            const Icon(Icons.star, size: 14, color: Colors.orange),
+            const SizedBox(width: 4),
+            Text('${student.stars} estrellas'),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Control de estrellas
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange[200]!),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle, size: 20),
+                    color: Colors.red[700],
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: () => onUpdateStars(-1),
                   ),
-                ),
-                const Divider(),
-                
-                // Lista de Alumnos Inscritos
-                Expanded(
-                  child: _enrolledStudents.isEmpty
-                      ? const Center(
-                          child: Text('Aún no hay alumnos inscritos en esta clase.'),
-                        )
-                      : ListView.builder(
-                          itemCount: _enrolledStudents.length,
-                          itemBuilder: (context, index) {
-                            final student = _enrolledStudents[index];
-                            return _EnrolledStudentTile(
-                              student: student,
-                              onTap: () => _viewStudentDetails(student),
-                              onRemove: () => _deleteStudentFromClass(student),
-                            );
-                          },
-                        ),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '${student.stars}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle, size: 20),
+                    color: Colors.green[700],
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: () => onUpdateStars(1),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.link_off, color: Colors.red, size: 20),
+              tooltip: 'Desvincular',
+              onPressed: onRemove,
+            ),
+            const Icon(Icons.chevron_right, size: 16),
+          ],
+        ),
+        onTap: onTap,
+      ),
     );
   }
 }
-
-// --- WIDGETS AUXILIARES ---
-
-// Diálogo para seleccionar alumno existente
 class _StudentSelectionDialog extends StatefulWidget {
   final List<Student> students;
   const _StudentSelectionDialog({required this.students});
@@ -418,16 +557,23 @@ class _StudentSelectionDialogState extends State<_StudentSelectionDialog> {
   }
 }
 
-// Tile para mostrar un alumno inscrito (con acción de quitar)
-class _EnrolledStudentTile extends StatelessWidget {
+class _EnrolledStudentTileWithAttendance extends StatelessWidget {
   final Student student;
+  final int asistencias;
+  final int totalClases;
+  final int inasistencias;
   final VoidCallback onTap;
   final VoidCallback onRemove;
+  final Function(int delta) onUpdateStars;
 
-  const _EnrolledStudentTile({
+  const _EnrolledStudentTileWithAttendance({
     required this.student,
+    required this.asistencias,
+    required this.totalClases,
+    required this.inasistencias,
     required this.onTap,
     required this.onRemove,
+    required this.onUpdateStars,
   });
 
   @override
@@ -444,25 +590,117 @@ class _EnrolledStudentTile extends StatelessWidget {
           ),
         ),
         title: Text(
-            student.nombre,
-            style: Theme.of(context).textTheme.titleMedium,
+          student.nombreCompleto,
+          style: Theme.of(context).textTheme.titleMedium,
         ),
-        subtitle: Text('Estrellas: ${student.stars}'),
+        subtitle: Row(
+          children: [
+            // Asistencias
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle, size: 14, color: Colors.blue),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$asistencias/$totalClases',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            
+            // Inasistencias
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.red[200]!),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cancel, size: 14, color: Colors.red),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$inasistencias',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            
+            // Estrellas
+            const Icon(Icons.star, size: 14, color: Colors.orange),
+            const SizedBox(width: 4),
+            Text('${student.stars}'),
+          ],
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Control de estrellas
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange[200]!),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle, size: 20),
+                    color: Colors.red[700],
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: () => onUpdateStars(-1),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '${student.stars}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle, size: 20),
+                    color: Colors.green[700],
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: () => onUpdateStars(1),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.link_off, color: Colors.red),
-              tooltip: 'Desvincular de la clase',
+              icon: const Icon(Icons.link_off, color: Colors.red, size: 20),
+              tooltip: 'Desvincular',
               onPressed: onRemove,
             ),
-            const Icon(Icons.chevron_right, size: 20),
+            const Icon(Icons.chevron_right, size: 16),
           ],
         ),
-        onTap: onTap, // Abre la ficha en modo SOLO LECTURA
+        onTap: onTap,
       ),
     );
   }
 }
-
-// Nota: Se asume que ClassCreationScreen, NewStudentFormScreen y ReadOnlyStudentDetailScreen existen.

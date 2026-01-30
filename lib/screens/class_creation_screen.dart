@@ -6,7 +6,7 @@ const List<String> diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Vie
 
 class ClassCreationScreen extends StatefulWidget {
   const ClassCreationScreen({super.key});
-
+ 
   @override
   State<ClassCreationScreen> createState() => _ClassCreationScreenState();
 }
@@ -216,7 +216,7 @@ class _ClassCreationScreenState extends State<ClassCreationScreen> {
                       if (_diasSeleccionados.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'Días: ${_diasSeleccionados.toList()..sort().map((d) => diasSemana[d - 1]).join(', ')}',
+                          'Días: ${(_diasSeleccionados.toList()..sort()).map((d) => diasSemana[d - 1]).join(', ')}',
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],

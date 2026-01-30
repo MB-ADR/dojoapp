@@ -10,14 +10,14 @@ class Student extends HiveObject {
   @HiveField(0)
   String id;
 
+@HiveField(3)
+String? photoPath;
+
   @HiveField(1)
   String nombre;
 
   @HiveField(2)
   String apellido;
-
-  @HiveField(3)
-  String? photoPath;
 
   @HiveField(4)
   String dni;
@@ -91,11 +91,15 @@ class Student extends HiveObject {
   @HiveField(27)
   Map<String, int> medallas; // {oro: 2, plata: 1, bronce: 3, corazon: 5}
 
+  @HiveField(28)
+  List<int>? photoBytes;
+
   Student({
     this.id = '',
     required this.nombre,
     this.apellido = '',
     this.photoPath,
+    this.photoBytes,
     required this.dni,
     this.fechaNacimiento,
     this.weightKg,
@@ -157,16 +161,16 @@ class Student extends HiveObject {
     return age;
   }
 
-  String get categoriaBusqueda {
-    if (edad >= 3 && edad <= 11) {
-      return "Inicial";
-    } else if (edad >= 12 && edad <= 17) {
-      return "Juvenil";
-    } else if (edad >= 18) {
-      return "Adulto";
-    }
-    return "Sin Categoría";
+ String get categoriaBusqueda {
+  if (edad >= 3 && edad < 7) {
+    return "Inicial";
+  } else if (edad >= 7 && edad <= 17) {
+    return "Juvenil";
+  } else if (edad >= 18) {
+    return "Adulto";
   }
+  return "Sin Categoría";
+}
 
   int get totalMedallas {
     return (medallas['oro'] ?? 0) +

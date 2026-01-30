@@ -7,6 +7,7 @@ import '../models/student.dart';
 import '../models/class_schedule.dart';
 import '../models/lesion.dart';
 import '../services/database_service.dart';
+import 'dart:typed_data';
 
 class StudentFullProfileScreen extends StatefulWidget {
   final Student student;
@@ -84,31 +85,30 @@ class _StudentFullProfileScreenState extends State<StudentFullProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1000,
+Future<void> _pickImage() async {
+  try {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1000,
+    );
+
+    if (image != null) {
+      // Para web, guardamos los bytes directamente
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _student.photoBytes = bytes;
+        _student.photoPath = image.name; // Solo el nombre para referencia
+      });
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al seleccionar foto: $e')),
       );
-
-      if (image != null) {
-        final Directory appDir = await getApplicationDocumentsDirectory();
-        final String fileName = 'student_${_student.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final File savedImage = await File(image.path).copy('${appDir.path}/$fileName');
-
-        setState(() {
-          _student.photoPath = savedImage.path;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al seleccionar foto: $e')),
-        );
-      }
     }
   }
+}
 
   Future<void> _selectBirthDate() async {
     final DateTime? picked = await showDatePicker(
@@ -230,36 +230,38 @@ class _StudentFullProfileScreenState extends State<StudentFullProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Foto
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage: hasPhoto ? FileImage(File(_student.photoPath!)) : null,
-                      child: !hasPhoto
-                          ? const Icon(Icons.camera_alt, size: 40, color: Colors.grey)
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.edit, color: Colors.white, size: 20),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          // Foto
+Center(
+  child: GestureDetector(
+    onTap: _pickImage,
+    child: Stack(
+      children: [
+        CircleAvatar(
+          radius: 60,
+          backgroundColor: Colors.grey[300],
+          backgroundImage: _student.photoBytes != null
+              ? MemoryImage(Uint8List.fromList(_student.photoBytes!))
+              : null,
+          child: _student.photoBytes == null
+              ? const Icon(Icons.camera_alt, size: 40, color: Colors.grey)
+              : null,
+        ),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.edit, color: Colors.white, size: 20),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
             const SizedBox(height: 8),
             const Center(
               child: Text(
@@ -495,7 +497,7 @@ class _StudentFullProfileScreenState extends State<StudentFullProfileScreen> {
                           ),
                   ),
                 );
-              }).toList(),
+              }),
 
             const SizedBox(height: 24),
 
@@ -534,17 +536,136 @@ class _StudentFullProfileScreenState extends State<StudentFullProfileScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
 
             const SizedBox(height: 24),
 
             // Premios
-            const Text(
-              'MEDALLAS Y PREMIOS',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            // MEDALLAS Y PREMIOS
+const Text(
+  'MEDALLAS Y PREMIOS',
+  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+),
+const Divider(),
+
+// Control de Estrellas
+Card(
+  color: Colors.orange[50],
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      children: [
+        const Text(
+          'Estrellas (Méritos)',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.remove_circle, size: 40),
+              color: Colors.red[700],
+              onPressed: () {
+                setState(() {
+                  if (_student.stars > 0) {
+                    _student.stars--;
+                  }
+                });
+              },
             ),
-            const Divider(),
-            
+            const SizedBox(width: 24),
+            Column(
+              children: [
+                Text(
+                  '${_student.stars}',
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+                const Text(
+                  'estrellas',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+            const SizedBox(width: 24),
+            IconButton(
+              icon: const Icon(Icons.add_circle, size: 40),
+              color: Colors.green[700],
+              onPressed: () {
+                setState(() {
+                  _student.stars++;
+                });
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Visualización de estrellas
+        if (_student.stars > 0)
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              ...List.generate(
+                _student.stars > 20 ? 20 : _student.stars,
+                (index) => const Icon(Icons.star, color: Colors.orange, size: 20),
+              ),
+              if (_student.stars > 20)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(
+                    '+${_student.stars - 20}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    ),
+  ),
+),
+
+const SizedBox(height: 16),
+
+// Historial de Medallas
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceAround,
+  children: [
+    _MedalCount(
+      icon: Icons.emoji_events,
+      color: Colors.amber,
+      count: _student.medallas['oro'] ?? 0,
+      label: 'Oro',
+    ),
+    _MedalCount(
+      icon: Icons.emoji_events,
+      color: Colors.grey,
+      count: _student.medallas['plata'] ?? 0,
+      label: 'Plata',
+    ),
+    _MedalCount(
+      icon: Icons.emoji_events,
+      color: Colors.brown,
+      count: _student.medallas['bronce'] ?? 0,
+      label: 'Bronce',
+    ),
+    _MedalCount(
+      icon: Icons.favorite,
+      color: Colors.red,
+      count: _student.medallas['corazon'] ?? 0,
+      label: 'Corazón',
+    ),
+  ],
+),          
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [

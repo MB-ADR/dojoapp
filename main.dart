@@ -722,12 +722,14 @@ class _PantallaFichaAlumnoState extends State<PantallaFichaAlumno> {
 
   void _marcarAsistencia() {
     if (widget.schedule == null) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Debe estar en una pantalla de clase para marcar asistencia.'),
             duration: Duration(seconds: 3),
           ),
         );
+        }
         return;
     }
     

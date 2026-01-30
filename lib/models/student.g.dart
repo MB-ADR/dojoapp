@@ -21,6 +21,7 @@ class StudentAdapter extends TypeAdapter<Student> {
       nombre: fields[1] as String,
       apellido: fields[2] as String,
       photoPath: fields[3] as String?,
+      photoBytes: (fields[28] as List?)?.cast<int>(),
       dni: fields[4] as String,
       fechaNacimiento: fields[5] as DateTime?,
       weightKg: fields[6] as double?,
@@ -52,15 +53,15 @@ class StudentAdapter extends TypeAdapter<Student> {
   @override
   void write(BinaryWriter writer, Student obj) {
     writer
-      ..writeByte(28)
+      ..writeByte(29)
       ..writeByte(0)
       ..write(obj.id)
+      ..writeByte(3)
+      ..write(obj.photoPath)
       ..writeByte(1)
       ..write(obj.nombre)
       ..writeByte(2)
       ..write(obj.apellido)
-      ..writeByte(3)
-      ..write(obj.photoPath)
       ..writeByte(4)
       ..write(obj.dni)
       ..writeByte(5)
@@ -108,7 +109,9 @@ class StudentAdapter extends TypeAdapter<Student> {
       ..writeByte(26)
       ..write(obj.lesiones)
       ..writeByte(27)
-      ..write(obj.medallas);
+      ..write(obj.medallas)
+      ..writeByte(28)
+      ..write(obj.photoBytes);
   }
 
   @override

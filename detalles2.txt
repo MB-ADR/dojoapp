@@ -1,0 +1,20 @@
+bien, estoy viendo que en el apartado de clases, al entrar a una clase faltaria un boton de asistencia. asoi puedo tomar asistencia en clase, quiero que este boton se habilite solo en el horario de clase hasta 30 minutos despues de la clase.
+
+ademas al entrar a la ficha del alumno quiero poder controlar Tambien las estrellas que este alumno tiene, agregar o sacar como esta en otras partes.
+
+quiero Tambien poder visualizar las lesiones desde la lista de alumnos inscriptos a la clase.
+ademas quiero que se puedan agregar varios alumnos a la vez en cada clase, pero que la lista de alumnos para vincular alumno existente este separada por iniciales, juveniles y adultos
+
+ademas Tambien en la parte de clases, entrando en la lista de alumnos inscriptos a esta clase, y tocando la ficha del alumno, debo poder visualizar toda la ficha que tiene el alumno, solo veo datos del padre de la madre, del alumno, las estrellas y solamente el historial de asistencias a esta clase ( quiero poder ver desde alli y en todos lados, las clases a las que esta inscripto este alumno, siempre. obviamente si esta inscripto a kick boxing a las 17, a kick boxing a las 20 y a muay thay a las 21 y yo entre a la clase de kick boxing a las 20 quiero poder visualizar esta clase mas grande que las demas asi diferencio en que clase estoy, y cuales asistencias son mas importantes ahora. pero en otros apartados como en lo son gestion de lumnos o el apartado de premios esta bien que sean todos del mismo tamaño
+
+ademas, me gustaria que se calcule el indice de masa corporal IMC teniendo el peso, la altura, y faltaria agregar el genero una sub categoria importante y que en un futuro me permita filtrar por genero Tambien.
+teniendo esto quiero que la app me calcule el imc y sea un dato con colores, si el imc esta entre 19 y 25 figurara los numero de color verde(perfecto), si el imc es mayor que 25 hasta 30 el numero figurara en amarillo(aceptable) y si el imc es mayor que 30 hasta 35 el imc figurara de color naranja (alerta) y si el imc es mayor que 35 figurara de color rojo y si el imc es menor que 18 las letras figuraran en color azul( alerta)
+
+Tambien es un factor que podra ayudarme con recompensas y para llevar un control de los competidores
+
+
+otro problema es que en la ficha de alumnos en el apartado de clases, entre en la clase de kick boxing que cree y no visualizo la imagen de perfil del alumno, y no la veo en la ficha de este alumno tampoco.
+
+
+faltaria todo el apartado de competidores, en donde pueda agregarle calorias consumidas diariamente, ver y gestionar las rutinas, los ejercicios, agregar una session de gym( calorias normales de un entrenamiento leve en el gymnasio)
+ 

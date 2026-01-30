@@ -1,0 +1,137 @@
+bien, mi app funciona asi.
+
+qquiero entrar y que hayan 4 cajas
+
+en la primera quiero que este la base de datos de los alumnos, esa va a ser la caja de alumnos. en donde puedo ver, editr o agregar alumnos
+
+
+
+dato importante y que falta en la app como esta ahora, quiero que los alumnos esten separados en 3 cajitas adultos, juveniles o inicial
+
+al entrar en cualquiera de esas cajas veria la lista completa de alumnos asi igual que youtube music. quiero poder ver la foto del alumno y su nombre completo , al tocar en el nombre del alumno abriria toda la ficha de informacion del alumno, 
+
+nombre:
+
+apellido:
+
+dni:
+
+fecha de nacimiento:
+
+edad:
+
+altura:
+
+peso:
+
+fecha de inscripcion:
+
+datos de contacto
+
+nombre del padre:
+
+apellido del padre:
+
+telefono del padre:
+
+nombre de la madre:
+
+apellido de la madre:
+
+telefono de la madre:
+
+otro contacto de emergencia
+
+nombre:
+
+apellido:
+
+telefono:
+
+observaciones: (casilla con caracteres ilimitados, ya que podria llevar desde fechas importantes hasta advertencias sobre algun ejercicio o musculo resagado para individualizar el entrenamiento)
+
+quiero un registro historico de eventos, en forma de casilla con las siguientes categorias: 
+
+lesiones: titulo y fecha (titulo por ejemplo "NUDILLO" y la fecha de la lesion) al tocar en la casilla de lesion veria el titulo del evento lesion "NUDILLO" la fecha EJ"28/01/2026" y una casilla para marcar alta medica, importante, si el alumno se lesiona hoy 26/01/2026 la lesion aparecera en un recuadro rojo, al marcar alta medica aparecera en un recuadro verde. pero no se borrara del historial. quiero informacion completa del alumno toda su carrera deportiva.
+
+debajo de este registro historico de eventos quiero poder visualizar en cajitas las clases a las que esta inscripto y ver sus asistencias por ejemplo "kick-17:00-5/9" eso me dice que esta inscripto a las clases de kick boxing en el horario 17:00 hs y lleva 5 asistencias de 9 , no deseo interactur mas con ese campo, solo quiero que esa infomacion dinamica este en su planilla
+
+debajo quiero su registro de premios, actualmente o
+
+el alumno con sus asistencias completas ej"9/9" se gana una estrellita, y sus aportes deportivos y desempeño mensual les pueden dar mas estrellas, la idea es que compitan por estas estrellas y asi el sistema calculara el primer dia de febrero que alumno tiene mas estrellas en el mes de enero y los colocara en el podio, en donde tendremos 1 medalla por posicion . oro, plata, bronce y un corazon por participar (<1 estrella) . asi el alumno que llegue al oro se gane un premio otorgado por el club, van a ser remeras, guantes, tibiales, vendas, bucales.... la idea es que se ganen el equipo con su desempeño , y si llega a haber un empate o varios, tendria que poder generar un evento en donde pueda agregarle manualmente estrellas a los alumnos que cumplan los retos puestos por el proesor(yo) y asi desempatar.
+
+todo esto quiero que se active desde el apartado 3, el tercer recuadro es el de premios, alli quiero ver el podio como viene pintando la cosa, foto en miniatura del alumno y el nombre, solo podre tocar en el nombre del alumno que aparece en el podio y ver su ficha, solo lectura.
+
+y al volver al apartado de premios voy a tener un boton de calcular ganador del mes que solo se habilitara si las asistencias del mes transcurrido se terminaron, por eso quiero que el premio de enero se pueda calcular y este habilitado para eso el 1ro de enero, y si hay empates se me habilite el desempate solo en el primer premio( medalla de oro)
+
+ademas de ver los historicos, quiero una casilla que al entrar vea que alumno tiene mas medallas de oro, que alumno tiene mas medallas de plata y que alumno tiene mas medallas de broce y que alumno tiene mas corazoncitos.
+
+
+
+bien, llegando al segundo apartado como la foto asd.png el apartado de clases. quiero una lista con las clases actuales, una debajo de la otra recuadro blanco con la info de la clase, ej " Kick Boxing - 17:15 - iniciales"
+
+
+
+al entrar a la clase solo veria los participantes en forma de lista, de nuevo quiero ver el redondito con su foto de perfil y su nombre completo, y al tocar el nombre completo me abriria la ficha del alumno solo en modo lectura, y lo unico que puedo editar en ese caso son las estrellas, agregar o quitar.
+
+volviendo atras, al apartado de las clases, quiero un boton en donde pueda agregar clases y uno de quitar o eliminar clases( solo las clases y no los alumnos, evitemos bug's), al agregar clases se me abre la configuracion actual, el mes que estamos transcurriendo y selecciono los dias y los horarios que se dictan las clases. despues se me habre el apartado de esta clase en donde podria agregar un alumno existente desde la base de datos o agregar un alumno nuevo.
+
+al tener la lista de alumnos completa o lista, y al finalizar la clase quiero tocar en un boton el boton de las asistenciass y agregar quienes estuvieron presentes ese dia, quiero que este boton no sea de evento unico, quiero agregar una vez, al principo o fin, ya que puede ser que un alumno este en el baño cuando pase lista. pero que la asistencia se bloquee si no es el dia o paso mas de 30 minutos de terminada la clase, si evitamos que me equiboque de clase al dar el presente.
+
+de nuevo, al ser una base de datos general y estiquetas de informacion esparcidas por la app, quiero que esto se actualice para todas las instancias en donde aparezca el alumna y tenga acceso a lectura de su info.
+
+si el alumno viene a la clase de las 17:15 inicial y viene a las de 18:00 juveniles quiero que las estrellas se sumen , ya que prticipa a  mas de una clase y vino todo el mes a ambos horarios, es un merito que debe ser recompensado.
+
+
+
+para terminar, volviendo a la logica de la ficha de info del alumno, quiero poder agregar la fecha de nacimiento y que la app me calcule sola la edad, y me genere un evento en forma de notificacion un dia antes de su cumpleaños, por ejemplo 
+
+alumno
+
+alexis del rio
+
+28 años
+
+10/09/1997
+
+
+
+el 9/9 al abrir la app me figure un cartel " cumpleños mañana : alexis del rio, juan perez, david villaroel, sergio luzco."
+
+asi estar al tanto quienes cumplen años 
+
+otro dato que no puede ser cambiado es la fecha de inscripcion, quiero que al generar la ficha se genere un id unico por aalumno y ese id (20262601-dni) sea un dato irrebocable y en la ficha de informacion del alumno me figure la fecha de inscripcion 26/01/2026 dependiente del id del alumno
+
+
+
+el cuarto apartado va a ser competidores
+
+al tocar en el cuadro de competidores voy a poder agregar un alumno de la base de datos y alli poder agregar fotos a su "legjo" por ejemplo ficha medica o carta de invitacion a algun evento.
+
+en este apartado quiero generar un seguimiento de sus competiciones, generar eventos y recordatorios, llevar registros de sus cortes de peso, llevar un control de sus rutinas, tener alarmas para que el alumno informe sobre el peso o visitas al medico por lesiones ademas aca quiero ver lo siguiente 
+
+Requerimiento Adicional: Integración con HealthKit y Health Connect Quiero que la aplicación pueda leer datos de actividad física del dispositivo del alumno para recompensar el ejercicio fuera del Dojo.
+
+
+
+
+
+Plugin: Utiliza el paquete health de Flutter.
+
+
+
+Funcionalidad:
+
+
+
+
+
+Necesito una función que lea las "Calorías Activas" y los "Pasos" del día actual.
+
+
+
+Si el alumno supera un objetivo (ej: 500 calorías o 10,000 pasos), la app debe sugerir desbloquear un logro o sumar puntos para una estrella.
+
+
+
+Permisos: Incluye en la configuración los permisos necesarios para AndroidManifest.xml (Android) y Info.plist (iOS) para leer datos de actividad física.

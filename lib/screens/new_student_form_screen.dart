@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:dojo_app/models/student.dart';
-import 'package:dojo_app/models/class_schedule.dart';
-import 'package:dojo_app/services/database_service.dart';
+import 'package:intl/intl.dart';
+import '../models/student.dart';
+import '../models/class_schedule.dart';
+import '../services/database_service.dart';
+import 'dart:typed_data';
 
 class NewStudentFormScreen extends StatefulWidget {
   const NewStudentFormScreen({super.key});
@@ -17,14 +19,10 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
   final ImagePicker _picker = ImagePicker();
 
   final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _apellidoController = TextEditingController();
   final TextEditingController _dniController = TextEditingController();
-  final TextEditingController _edadController = TextEditingController();
-  final TextEditingController _padreNombreController = TextEditingController();
-  final TextEditingController _padreTelController = TextEditingController();
-  final TextEditingController _madreNombreController = TextEditingController();
-  final TextEditingController _madreTelController = TextEditingController();
 
-  String? _photoPath;
+  List<int>? _photoBytes;
   DateTime? _birthDate;
   List<ClassSchedule> _availableSchedules = [];
   Set<String> _selectedClassIds = {};
@@ -43,21 +41,27 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
     });
   }
 
-  void _calculateBirthDateFromAge(int age) {
-    if (age <= 0 || age > 100) {
-      _birthDate = null;
-      return;
-    }
-    final now = DateTime.now();
-    _birthDate = DateTime(now.year - age);
+Future<void> _pickImage() async {
+  final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+  if (image != null) {
+    final bytes = await image.readAsBytes();
+    setState(() {
+      _photoBytes = bytes;
+    });
   }
+}
+  Future<void> _selectBirthDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+    );
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) {
+    if (picked != null) {
       setState(() {
-        _photoPath = image.path;
+        _birthDate = picked;
       });
     }
   }
@@ -66,30 +70,21 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
-    
-    final int age = int.tryParse(_edadController.text) ?? 0;
-    _calculateBirthDateFromAge(age);
 
-    if (_birthDate == null && age > 0) {
+    if (_birthDate == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al procesar la edad.')),
+        const SnackBar(content: Text('La fecha de nacimiento es obligatoria')),
       );
       return;
     }
 
-    final newStudent = Student(
-  nombre: _nombreController.text,
-  apellido: '', // Lo agregarás en el formulario
+ final newStudent = Student(
+  nombre: _nombreController.text.trim(),
+  apellido: _apellidoController.text.trim(),
   dni: _dniController.text.trim(),
   fechaNacimiento: _birthDate,
-  nombrePadre: _padreNombreController.text.trim(),
-  apellidoPadre: '', // Agregar campo
-  telefonoPadre: _padreTelController.text.trim(),
-  nombreMadre: _madreNombreController.text.isEmpty ? null : _madreNombreController.text.trim(),
-  apellidoMadre: '', // Agregar campo
-  telefonoMadre: _madreTelController.text.isEmpty ? null : _madreTelController.text.trim(),
-  photoPath: _photoPath,
+  photoBytes: _photoBytes, // CAMBIADO
   classIds: _selectedClassIds.toList(),
   creationDate: DateTime.now(),
   isArchived: false,
@@ -100,13 +95,9 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
     try {
       await DatabaseService().saveStudent(newStudent);
       if (!mounted) return;
-      if (mounted && Navigator.canPop(context)) {
-          Navigator.of(context).pop(newStudent.id);
-      } else {
-          Navigator.of(context).pop();
-      }
+      Navigator.of(context).pop(newStudent.id);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${newStudent.nombre} inscrito correctamente.')),
+        SnackBar(content: Text('${newStudent.nombreCompleto} inscrito correctamente.')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -116,36 +107,41 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
     }
   }
 
-  Widget _buildPhotoPicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('Foto del Alumno', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: _pickImage,
-          icon: const Icon(Icons.camera_alt),
-          label: Text(_photoPath == null ? 'Tomar Foto / Seleccionar de Galería' : 'Cambiar Foto'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _dniController.dispose();
+    super.dispose();
+  }
+
+Widget _buildPhotoPicker() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text('Foto del Alumno', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(
+        onPressed: _pickImage,
+        icon: const Icon(Icons.camera_alt),
+        label: Text(_photoBytes == null ? 'Seleccionar Foto de Galería' : 'Cambiar Foto'),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12),
         ),
-        if (_photoPath != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.file(
-                File(_photoPath!),
-                height: 100,
-                width: 100,
-                fit: BoxFit.cover,
-              ),
+      ),
+      if (_photoBytes != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Center(
+            child: CircleAvatar(
+              radius: 50,
+              backgroundImage: MemoryImage(Uint8List.fromList(_photoBytes!)),
             ),
           ),
-      ],
-    );
-  }
+        ),
+    ],
+  );
+}
 
   Widget _buildClassSelection() {
     if (_availableSchedules.isEmpty) {
@@ -154,7 +150,7 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
         children: [
           Text('Inscribir en Clases Iniciales', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          const Center(child: CircularProgressIndicator()),
+          const Center(child: Text('No hay clases disponibles. Crea una clase primero.')),
         ],
       );
     }
@@ -181,7 +177,9 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
               },
               showCheckmark: true,
               labelStyle: TextStyle(
-                color: _selectedClassIds.contains(schedule.id) ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
+                color: _selectedClassIds.contains(schedule.id) 
+                    ? Theme.of(context).colorScheme.onPrimary 
+                    : Theme.of(context).colorScheme.onSurface,
               ),
               selectedColor: Theme.of(context).colorScheme.primary,
               checkmarkColor: Theme.of(context).colorScheme.onPrimary,
@@ -213,9 +211,9 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
             TextFormField(
               controller: _nombreController,
               decoration: const InputDecoration(
-                labelText: 'Nombre Completo *',
+                labelText: 'Nombre *',
                 border: OutlineInputBorder(),
-                icon: Icon(Icons.person),
+                prefixIcon: Icon(Icons.person),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -225,92 +223,50 @@ class _NewStudentFormScreenState extends State<NewStudentFormScreen> {
               },
             ),
             const SizedBox(height: 16),
+
+            TextFormField(
+              controller: _apellidoController,
+              decoration: const InputDecoration(
+                labelText: 'Apellido *',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'El apellido es obligatorio.';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+
             TextFormField(
               controller: _dniController,
               decoration: const InputDecoration(
                 labelText: 'DNI',
                 border: OutlineInputBorder(),
-                icon: Icon(Icons.badge),
+                prefixIcon: Icon(Icons.badge),
               ),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _edadController,
-              decoration: const InputDecoration(
-                labelText: 'Edad *',
-                border: OutlineInputBorder(),
-                icon: Icon(Icons.cake),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'La edad es obligatoria.';
-                }
-                if (int.tryParse(value.trim()) == null || int.parse(value.trim()) <= 0) {
-                  return 'Ingrese una edad válida.';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  _calculateBirthDateFromAge(int.tryParse(value.trim()) ?? 0);
-                } else {
-                  _calculateBirthDateFromAge(0);
-                }
-              },
-            ),
-            const Divider(height: 32),
 
-            TextFormField(
-              controller: _padreNombreController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de Padre/Madre *',
-                border: OutlineInputBorder(),
-                icon: Icon(Icons.male),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Debe ingresar el nombre de un tutor.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _padreTelController,
-              decoration: const InputDecoration(
-                labelText: 'Teléfono de Contacto Principal *',
-                border: OutlineInputBorder(),
-                icon: Icon(Icons.phone),
-              ),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'El teléfono de contacto es obligatorio.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _madreNombreController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de Madre/Otro Tutor (Opcional)',
-                border: OutlineInputBorder(),
-                icon: Icon(Icons.female),
+            InkWell(
+              onTap: _selectBirthDate,
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Fecha de Nacimiento *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.calendar_today),
+                ),
+                child: Text(
+                  _birthDate == null
+                      ? 'Seleccionar fecha'
+                      : DateFormat('dd/MM/yyyy').format(_birthDate!),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _madreTelController,
-              decoration: const InputDecoration(
-                labelText: 'Teléfono de Contacto Secundario (Opcional)',
-                border: OutlineInputBorder(),
-                icon: Icon(Icons.phone_android),
-              ),
-              keyboardType: TextInputType.phone,
-            ),
+
             const Divider(height: 32),
 
             _buildClassSelection(),

@@ -43,7 +43,36 @@ class ClassSchedule extends HiveObject {
     final now = DateTime.now();
     return diasDeSemana.contains(now.weekday);
   }
+  
+  // Obtener hora de inicio de la clase en formato DateTime
+  DateTime? getClassStartTime() {
+  try {
+    // Parsear horario "17:15" a DateTime de hoy
+    final parts = horario.split(':');
+    if (parts.length != 2) return null;
+    
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, hour, minute);
+  } catch (e) {
+    return null;
+  }
+  }
 
+// Verificar si es momento de tomar asistencia (durante clase + 30 min después)
+  bool puedeTomarAsistenciaAhora() {
+  if (!esHoyDiaDeClase()) return false;
+  
+  final startTime = getClassStartTime();
+  if (startTime == null) return false;
+  
+  final now = DateTime.now();
+  final endWindow = startTime.add(const Duration(minutes: 90)); // Clase + 30 min después
+  
+  return now.isAfter(startTime) && now.isBefore(endWindow);
+  }
   int calculateTotalClasses(int month, int year, DateTime? studentCreationDate) {
     int count = 0;
     final effectiveCreationDate = studentCreationDate ?? DateTime(1900, 1, 1);
